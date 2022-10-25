@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-app
+        command: ${K8S_CONTAINER_COMMAND}

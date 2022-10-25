@@ -1,0 +1,6 @@
+
+# add do project .gitignore file
+.env*
+.devspace/
+k8s-deployment
+

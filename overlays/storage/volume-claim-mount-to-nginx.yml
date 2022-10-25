@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+      - name: ${PROJECT_NAME}-nginx-container-configfile-volume
+        configMap:
+          name: ${PROJECT_NAME}-nginx-container-configfile
+      - name: ${PROJECT_NAME}-app-volume
+        persistentVolumeClaim:
+          claimName: ${K8S_VOLUME_CLAIM_NAME}
+      containers:
+      - name: nginx-app
+        volumeMounts:
+          - name: ${PROJECT_NAME}-app-volume
+            mountPath: /usr/share/nginx/html${K8S_NGINX_FILES_LOCATION}
+          - name: ${PROJECT_NAME}-nginx-container-configfile-volume
+            mountPath: /etc/nginx/conf.d/

@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: 'true'
+    service.beta.kubernetes.io/do-loadbalancer-hostname: "${PROJECT_DOMAIN_NAME}"
+spec:
+  tls:
+  - hosts:
+    - "${PROJECT_DOMAIN_NAME}"
+    secretName: "${PROJECT_NAME}-tls-secret"

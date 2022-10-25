@@ -1,0 +1,15 @@
+FROM node:12-alpine as builder
+WORKDIR /usr/src/app
+COPY package.json .npmrc yarn.lock ./
+RUN npm install
+COPY . ./
+#ENV NODE_ENV=production REACT_APP_BASE_CONNECT="https://chat.api.dev.devopss-tools.io" REACT_APP_BASE_API=https://main.api.dev.devopss-tools.io REACT_APP_BASE_SSO=https://sso.api.dev.devopss-tools.io
+RUN cat .env | grep "NODE_\|REACT_" && \
+    yarn build
+
+FROM nginx:alpine
+COPY --from=builder /usr/src/app/build /usr/share/nginx/html
+EXPOSE 80
+RUN rm -v /etc/nginx/conf.d/*.conf
+COPY docker/nginx.conf /etc/nginx/conf.d
+CMD ["nginx", "-g", "daemon off;"]

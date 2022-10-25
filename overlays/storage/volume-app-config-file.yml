@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+      - name: ${PROJECT_NAME}-configfile-volume
+        configMap:
+          name: ${PROJECT_NAME}-app-configfile
+      containers:
+      - name: ${PROJECT_NAME}-app
+        volumeMounts:
+          - name: ${PROJECT_NAME}-configfile-volume
+            mountPath: ${K8S_APP_CONFIG_FILE_CONTAINER_PATH}/${K8S_APP_CONFIG_FILE_NAME}
+            subPath: app_config.tpl

@@ -1,0 +1,151 @@
+---
+stages:
+  - build
+  - test_1:base_deploy
+  - test_1:base_deploy_clean
+  - test_2:advanced_deploy
+  - test_2:advanced_deploy_clean
+  - test_3:version_incrementing
+  - test_3:version_incrementing_print
+
+services:
+  - docker:dind
+
+image:
+  name: $CI_REGISTRY/devopss-tools/k8s-deployment:ci-cd-tools-v02
+
+
+########### TEST BASE Build/Deployment
+base_build:
+  stage: build
+  environment: base_build_env
+  tags: [devopss-tools]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - cd ..
+    - cp -vf k8s-deployment/tests/kustomization_base.yaml ./
+    - cp -v k8s-deployment/templates/devspace.yaml ./
+    - cat "${envVars}" | envsubst > .env
+    - devspace run build
+base_deploy:
+  stage: test_1:base_deploy
+  environment: base_env
+  tags: [devopss-tools]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - cd ..
+    - cp -vf k8s-deployment/tests/kustomization_base.yaml ./
+    - cp -v k8s-deployment/templates/devspace.yaml ./
+    - cat "${envVars}" | envsubst > .env
+    - bash k8s-deployment/initDeploy.sh
+    - devspace run deployment
+    - devspace run check-deployment
+##########
+base_deploy_clean:
+  stage: test_1:base_deploy_clean
+  environment: base_env
+#  dependencies:
+#    - init_deploy
+  tags: [ devopss-tools ]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor  ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - cd ..
+    - cp -vf k8s-deployment/tests/kustomization_base.yaml ./
+    - cp -v k8s-deployment/templates/devspace.yaml ./
+    - cat "${envVars}" | envsubst > .env
+    - devspace run delete
+
+
+########### TEST Advanced Deployment
+advanced_deploy:
+  stage: test_2:advanced_deploy
+  environment: advanced_env
+  tags: [devopss-tools]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - cd ..
+    - echo "TEST=TEST" > app_config.tpl
+    - cp -vf k8s-deployment/tests/kustomization_advanced.yaml ./
+    - cp -v k8s-deployment/templates/devspace.yaml ./
+    - cat "${envVars}" | envsubst > .env
+    - devspace run deployment
+    - devspace run check-deployment
+##########
+advanced_deploy_clean:
+  stage: test_2:advanced_deploy_clean
+  environment: advanced_env
+#  dependencies:
+#    - advanced_deploy
+  tags: [ devopss-tools ]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - cd ..
+    - echo "TEST=TEST" > app_config.tpl
+    - cp -vf k8s-deployment/tests/kustomization_advanced.yaml ./
+    - cp -v k8s-deployment/templates/devspace.yaml ./
+    - cat "${envVars}" | envsubst > .env
+    - devspace run delete
+
+
+########### TEST Incrementing Version (VersMinor)
+version_incrementing:
+  stage: test_3:version_incrementing
+  tags: [ devopss-tools ]
+  only:
+    refs:
+      - development
+      - production
+  before_script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor ===  "
+    - echo " VERSION-${VERSION} CI_PIPELINE_IID-${CI_PIPELINE_IID} DOCKER_IMAGE_TAG-$DOCKER_IMAGE_TAG K8S_DOCKER_TAG-${K8S_DOCKER_TAG}"
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - bash version.sh  --variable=VersMinor
+version_print_incremented:
+  stage: test_3:version_incrementing_print
+  tags: [ devopss-tools ]
+  image:
+    name: docker:dind
+  only:
+    refs:
+      - development
+      - production
+#  dependencies:
+#    - version_incrementing
+  script:
+    - echo "  === VersMajor $VersMajor, VersMinor $VersMinor===  "

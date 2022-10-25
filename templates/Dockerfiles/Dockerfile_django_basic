@@ -1,0 +1,23 @@
+FROM python:3.6-slim-stretch
+
+RUN apt-get  update && \
+    apt-get install -y curl python3-dev python3-pip python3-virtualenv sqlitebrowser && \
+    apt-get clean autoclean && \
+    apt-get autoremove --purge -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /var/cache/apt/archives/*.deb
+
+RUN mkdir -p /usr/app
+WORKDIR /usr/app
+
+COPY requirements.txt /usr/app
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /usr/app
+
+ENV DJANGO_BIND=0.0.0.0:8000
+
+RUN python manage.py migrate
+
+CMD python manage.py runserver
+#CMD bash docker-startup.sh

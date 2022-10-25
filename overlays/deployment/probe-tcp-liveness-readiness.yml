@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-app
+        readinessProbe:
+          tcpSocket:
+            port: ${K8S_CONTAINER_PORT}
+          initialDelaySeconds: ${K8S_INITIAL_DELAY_SECONDS}
+          periodSeconds: ${K8S_CONTAINER_READINESS_TIMEOUT}
+        livenessProbe:
+          tcpSocket:
+            port: ${K8S_CONTAINER_PORT}
+          initialDelaySeconds: ${K8S_INITIAL_DELAY_SECONDS}
+          periodSeconds: ${K8S_CONTAINER_LIVNESS_TIMEOUT}

@@ -1,0 +1,106 @@
+##############################   COMMAND's   ##############################
+# devspace list commands
+# devspace run deployment
+# devspace run check-deployment
+# devspace run dev
+# devspace run delete
+
+###########################################################
+# all vars are reading from ./.env file
+###########################################################
+
+version: v1beta9
+
+dependencies:   # Project deployment dependencies
+- name: k8s-deployment
+  namespace: "${K8S_APP_NAMESPACE}"
+  skipBuild: false
+  source:
+    path: k8s-deployment
+  profile: ""
+
+dev:
+  logs:
+    showLast: 50
+    images:
+      - application
+  ports:
+  - imageName: application
+    namespace: "${K8S_APP_NAMESPACE}"
+    labelSelector:
+      app: ${PROJECT_NAME}
+      environment: ${K8S_ENV}
+    forward:
+    - port: 8081    # Port-Forwarding to container application
+      remotePort: ${K8S_CONTAINER_PORT}
+  open:
+  - url: http://localhost:8081
+#  sync:
+#  - imageName: application
+#    localSubPath: ./app
+#    containerPath: /usr/app/app
+#    labelSelector:
+#      app: ${PROJECT_NAME}
+#      environment: ${K8S_ENV}
+#    excludePaths:
+#    - node_modules/
+
+profiles:
+- name: build
+  patches:
+  - op: replace
+    path: dependencies[0].profile
+    value: build
+- name: k8s-kustomization
+  namespace: "${K8S_APP_NAMESPACE}"
+  patches:
+  - op: replace
+    path: dependencies[0].profile
+    value: k8s-kustomization
+  - op: replace
+    path: dependencies[0].skipBuild
+    value: true
+- name: deploy-app
+  patches:
+  - op: replace
+    path: dependencies[0].profile
+    value: deploy-app
+  - op: replace
+    path: dependencies[0].skipBuild
+    value: true
+
+commands:
+- name: "   ====  Main Deployment Commands ===="
+- name: build
+  command: devspace run prepare-envs && devspace --dependency=k8s-deployment -p build run build
+  description: Run build
+- name: deployment
+  command: devspace run prepare-envs && devspace --dependency=k8s-deployment -p deploy-app run deployment
+  description: Run deployment stack
+- name: dev
+  command: devspace run prepare-envs && devspace --dependency=k8s-deployment -p deploy-app run dev
+  description: Run in DEV mode (build & deployment)
+- name: delete
+  command: devspace run prepare-envs && devspace --dependency=k8s-deployment -p deploy-app run delete
+  description: Delete all stack
+- name: check-deployment
+  command: devspace --dependency=k8s-deployment -p deploy-app run check-deployment
+  description: Check deployment and rollback(on error)
+- name: prepare-envs
+  command: devspace run validate && cd k8s-deployment && devspace run prepare-envs
+  description: Check deployment and rollback(on error)
+- name: push-image
+  command: devspace --dependency=k8s-deployment -p deploy-app run push-image
+  description: Push docker image
+- name: k8s-image-repo-secret
+  command: devspace run prepare-envs && devspace --dependency=k8s-deployment -p deploy-app run k8s-image-repo-secret
+  description: Create a kubernetes secret to Docker Repository
+- name: ""
+- name: "   ====  HELP Deployment Commands  ===="
+  command: devspace --var=CONTAINER_NAME=worker- run <command>
+  description: "Use -var=CONTAINER_NAME= to running many containers/sama image "
+- name: help
+  command: devspace list commands
+  description: "Display all comands"
+- name: validate
+  command: "ls -la k8s*;  if [[ ! -f k8s-deployment/devspace.yaml ]]; then echo 'ERROR: file k8s-deployment/devspace.yaml does not exist'; exit 1; fi"

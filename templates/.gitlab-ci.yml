@@ -1,0 +1,125 @@
+---
+stages:
+  - build:version_incrementing
+  - build
+  - deploy
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+
+image:
+  name: $CI_REGISTRY/devopss-tools/k8s-deployment:ci-cd-tools-v02
+
+before_script:
+  - echo "  === Sync Git Module - K8S-Deployment ===  "
+  - git submodule deinit --all -f
+  - git submodule sync
+  - git submodule update --init
+#  - git submodule add -b production --force ../../../devopss-tools/k8s-deployment.git   # Example: For devopss-tools-platform/<group>/<project>
+  - git submodule add -b production --force ../../devopss-tools/k8s-deployment.git       # Example: For <group>/<project>
+  - git submodule update --recursive --remote &&  ls k8s*
+
+########### non production jobs
+build:
+  stage: build
+  environment: development
+  variables:
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}.${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}.${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+  only:
+    refs:
+#      - develop
+      - development
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  tags:
+    - devopss-tools
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Build Dockerfile ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run build
+
+deploy_dev_k8s:
+  stage: deploy
+  environment: development
+  variables:
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}.${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}.${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+  dependencies: [build]
+  only:
+    refs:
+#      - develop
+      - development
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  tags:
+    - devopss-tools
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Deployment ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run deployment
+    - devspace run check-deployment
+
+
+########### production steps
+version_incrementing:
+  stage: build:version_incrementing
+  only:
+    refs:
+#      - master
+      - production
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  tags:
+    - devopss-tools
+  script:
+    - echo "  === Incrementing VersMinor ===  "
+    - bash k8s-deployment/version.sh  --variable=VersMinor
+
+build_production:
+  stage: build
+  environment: production
+  dependencies: [version_incrementing]
+  variables:
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}-prod"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}-prod"
+  only:
+    refs:
+#      - master
+      - production
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  tags:
+    - devopss-tools
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Build Dockerfile ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run build
+
+deploy_production:
+  stage: deploy
+  environment: production
+  variables:
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}-prod"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}-prod"
+  dependencies: [build_production]
+  only:
+    refs:
+#      - master
+      - production
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  tags:
+    - devopss-tools
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Deployment ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run deployment
+    - export rollBack=true
+    - devspace run check-deployment
+

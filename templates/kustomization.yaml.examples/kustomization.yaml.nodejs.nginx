@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:  ## All bases k8s objects (deployment, service and ingress).
+  - k8s-deployment/deployment/
+  - k8s-deployment/service/
+  - k8s-deployment/ingress/

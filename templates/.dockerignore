@@ -1,0 +1,11 @@
+
+# add do project .dockerignore file
+.devspace/
+devspace*
+kustomization*
+k8s-deployment/
+.env*
+.gitlab-ci.yml
+Dockerfile
+**/Dockerfile
+**/docker-compose*.yaml

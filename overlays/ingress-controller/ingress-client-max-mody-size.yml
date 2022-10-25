@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    nginx.ingress.kubernetes.io/client-max-body-size: "${K8S_INGRESS_CL_MAX_BODY_SIZE}"
+    nginx.ingress.kubernetes.io/proxy-body-size: "${K8S_INGRESS_CL_MAX_BODY_SIZE}"
+    nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "${K8S_INGRESS_CL_MAX_BODY_SIZE}"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: 180s
+    nginx.org/proxy-connect-timeout: "12s"
+    nginx.org/proxy-read-timeout: "180s"
+    nginx.org/proxy-send-timeout: "180s"

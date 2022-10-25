@@ -1,0 +1,9 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "${K8S_INGRESS_PROXY_BUFFER_NUMBERS}"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "${K8S_INGRESS_PROXY_BUFFER_SIZE}"

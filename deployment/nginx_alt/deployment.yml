@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: ${K8S_NGINX_STATIC_REPLICAS}
+  template:
+    spec:
+      volumes:
+      - name: ${PROJECT_NAME}-nginx-container-configfile-volume
+        configMap:
+          name: ${PROJECT_NAME}-nginx-container-configfile
+      - name: ${PROJECT_NAME}-app-volume
+        persistentVolumeClaim:
+          claimName: ${K8S_VOLUME_CLAIM_NAME}
+      containers:
+      - name: nginx-app
+        image: nginx:1.19
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          timeoutSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 80
+          timeoutSeconds: 10
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 70m
+            memory: 100Mi
+        volumeMounts:
+          - name: ${PROJECT_NAME}-app-volume
+            mountPath: /usr/share/nginx/html${K8S_NGINX_FILES_LOCATION}
+          - name: ${PROJECT_NAME}-nginx-container-configfile-volume
+            mountPath: /etc/nginx/conf.d/

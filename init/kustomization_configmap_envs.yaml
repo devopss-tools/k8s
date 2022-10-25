@@ -1,0 +1,12 @@
+
+
+configMapGenerator:   ## Environments
+- name: ${PROJECT_NAME}-app-env-variables-file
+  env: ./.env_vars
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    environment: ${K8S_ENV}
+  annotations:
+    note: configmap-generated

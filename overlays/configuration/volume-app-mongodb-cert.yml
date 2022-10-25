@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+        - name: mongodb-certificate-volume
+          configMap:
+            name: mongodb-certificate
+      containers:
+      - name: ${PROJECT_NAME}-app
+        volumeMounts:
+          - name: mongodb-certificate-volume
+            mountPath: ${K8S_CONTAINER_WORKINGDIR_PATH}/certificates/mongodb.pem
+            subPath: mongodb.pem

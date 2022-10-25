@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+        - name: app-ca-certificate-volume
+          configMap:
+            name: app-ca-certificate
+      containers:
+      - name: ${PROJECT_NAME}-app
+        volumeMounts:
+          - name: app-ca-certificate-volume
+            mountPath: ${K8S_CONTAINER_WORKINGDIR_PATH}/certificates/ca.pem
+            subPath: ca.pem

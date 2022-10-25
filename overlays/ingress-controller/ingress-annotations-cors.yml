@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    kubernetes.io/ingress.class: "${K8S_INGRESS_CLASS}"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
+    nginx.ingress.kubernetes.io/cors-allow-methods: 'PUT, GET, POST, OPTIONS, DELETE, PATCH'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
