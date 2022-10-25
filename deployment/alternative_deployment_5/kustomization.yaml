@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}
+  project: ${PROJECT_NAME}
+  environment: ${K8S_ENV}
+
+namePrefix: ${PROJECT_NAME}-
+namespace: ${K8S_APP_NAMESPACE}
+
+resources:
+  - deployment.yml

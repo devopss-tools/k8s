@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:  ## All bases k8s objects (deployment, service and ingress).
+  - k8s-deployment/deployment/
+  - k8s-deployment/service/
+  - k8s-deployment/ingress/
+
+patchesStrategicMerge:  ## Additional kubernetes deployment objects patches (object specifications), all of them are merging into one deployment file.
+  - k8s-deployment/overlays/security/secret-image-repository.yml
+  - k8s-deployment/overlays/security/devopss-tools-platform-secret-image-repository.yml

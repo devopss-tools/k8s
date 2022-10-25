@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-deployment
+  namespace: ${K8S_APP_NAMESPACE}
+spec:
+  replicas: ${K8S_ALTERNATIVE_DEPLOYMENT_5_REPLICAS}
+  template:
+    spec:
+      imagePullSecrets:
+        - name: ${K8S_APP_NAMESPACE}-image-registry-secret
+      containers:
+      - name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-app
+        image: ${K8S_DOCKER_IMAGE}:${K8S_DOCKER_TAG}
+        ports:
+        - containerPort: ${K8S_CONTAINER_PORT}
+        resources:
+          limits:
+            cpu: "${K8S_CONTAINER_CPU_LIMIT}"
+            memory: "${K8S_CONTAINER_RAM_LIMIT}"
+          requests:
+            cpu: "${K8S_CONTAINER_CPU_REQUEST}"
+            memory: "${K8S_CONTAINER_RAM_REQUEST}"
+
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-horizontal-pod-autoscaler
+  namespace: ${K8S_APP_NAMESPACE}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-deployment
+  minReplicas: ${K8S_ALTERNATIVE_DEPLOYMENT_5_REPLICAS}
+  maxReplicas: ${K8S_ALTERNATIVE_DEPLOYMENT_5_REPLICAS_MAX}
+  targetCPUUtilizationPercentage: 85

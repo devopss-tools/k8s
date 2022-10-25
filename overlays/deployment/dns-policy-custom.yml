@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-app
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - ${K8S_CUSTOM_DNS_IP}
+          - ${K8S_CLUSTER_DNS_IP}
+        searches:
+          - kwg-test.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+          - ax.internal.cloudapp.net

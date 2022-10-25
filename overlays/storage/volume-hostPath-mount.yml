@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+      - name: ${PROJECT_NAME}-hostpath-volume
+        hostPath:
+          path: ${K8S_VOLUME_HOST_PATH}/${PROJECT_NAME}
+          type: DirectoryOrCreate
+      containers:
+      - name: ${PROJECT_NAME}-app
+        volumeMounts:
+          - name: ${PROJECT_NAME}-hostpath-volume
+            mountPath: ${K8S_VOLUME_MOUNT_PATH}

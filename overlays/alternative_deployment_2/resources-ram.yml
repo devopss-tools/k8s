@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_2_NAME}-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_2_NAME}-app
+        resources:
+          limits:
+            memory: "${K8S_ALTERNATIVE_DEPLOYMENT_2_CONTAINER_RAM_LIMIT}"
+          requests:
+            memory: "${K8S_ALTERNATIVE_DEPLOYMENT_2_CONTAINER_RAM_REQUEST}"

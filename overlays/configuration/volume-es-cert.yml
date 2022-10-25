@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      volumes:
+        - name: es-certificate-volume
+          configMap:
+            name: es-certificate
+      containers:
+      - name: ${PROJECT_NAME}-app
+        volumeMounts:
+          - name: es-certificate-volume
+            mountPath: ${K8S_CONTAINER_WORKINGDIR_PATH}/certificates/es_ca.crt
+            subPath: es.crt

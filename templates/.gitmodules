@@ -1,0 +1,4 @@
+[submodule "k8s-deployment"]
+	path = k8s-deployment
+	url = ../../devopss-tools/k8s-deployment.git
+	branch = master

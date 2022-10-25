@@ -1,0 +1,110 @@
+# all vars are reading from ./.env file
+version: v1beta9
+
+images:
+  application:
+    image: ${DOCKER_REPO_IMAGE}
+    dockerfile: ../${DOCKER_FILE_PATH}
+#    build:
+#      docker:
+#        useBuildKit: true
+    createPullSecret: true
+    context: ../                     # string   | Relative path to the context used for building (Default: ./)
+    tags:
+      - ${K8S_DOCKER_TAG}
+    preferSyncOverRebuild: true
+    injectRestartHelper: false
+    appendDockerfileInstructions:
+    - USER root
+
+deployments:
+- name: application
+  namespace: "${K8S_APP_NAMESPACE}"
+  kubectl:
+    manifests:
+    - " === ERROR === This value it is comming from profiles, no default value was set !!!! "
+    kustomize: ""
+
+profiles:
+- name: build
+  patches:
+  - op: replace
+    path: deployments.name=application.kubectl.kustomize
+    value: false
+- name: k8s-kustomization
+  patches:
+  - op: replace
+    path: deployments.name=application.kubectl.manifests[0]
+    value: ./
+  - op: replace
+    path: deployments.name=application.kubectl.kustomize
+    value: true
+- name: deploy-app
+  patches:
+  - op: replace
+    path: deployments.name=application.kubectl.manifests[0]
+    value: ../.env_k8s_temp_app*.yaml
+  - op: replace
+    path: deployments.name=application.kubectl.kustomize
+    value: false
+  - op: remove
+    path: images.application.appendDockerfileInstructions
+
+commands:
+- name: "   ====  Main Deployment Commands ===="
+- name: build
+  command: cd .. && devspace build  -p build  --dependency=k8s-deployment --verbose-dependencies -b
+  description: Run build
+- name: deployment
+  command: devspace run prepare && devspace run deploy
+  description: Run deployment stack
+- name: dev
+  command: devspace run prepare && cd .. &&  devspace run build && devspace dev -p deploy-app --verbose-dependencies
+  description: Run in DEV mode (build & deployment)
+- name: check-deployment
+  command: cd .. &&  devspace --dependency=k8s-deployment -p k8s-kustomization run prepare-envs &&  bash ./k8s-deployment/deploy.sh --checkDeployment=true #&& devspace run clean
+  description: Check deployment and rollback(on error)
+- description: " "
+- name: deploy
+  command: cd .. &&  devspace deploy -p deploy-app --dependency=k8s-deployment --timeout=${K8S_DEPLOYMENT_TIMEOUT} #&& devspace run clean
+  description: Run deployment
+- name: prepare-envs
+  command: cd .. &&  bash k8s-deployment/deploy.sh --prepareEnv=true
+  description: Prepare env variables files
+- name: prepare-yaml-all
+  command: cd .. &&  devspace --dependency=k8s-deployment -p k8s-kustomization run prepare-kustomize
+  description: Prepare all stack
+- name: prepare
+  command: cd .. &&  devspace --dependency=k8s-deployment -p k8s-kustomization run prepare-envs && devspace --dependency=k8s-deployment -p k8s-kustomization run prepare-yaml-all
+  description: Prepare for deployment
+- name: clean
+  command: cd .. &&   rm -vf .env_k8s_temp_app*.yaml .env_vars
+  description: Remove generated files
+- name: delete
+  command: devspace run prepare && cd .. &&  devspace purge -p deploy-app --dependency=k8s-deployment
+  description: Delete all stack
+- name: ""
+- name: prepare-kustomize     # Must to be run before first deploy, it will create .env_k8s_temp_app.yaml file
+  command: source customs.sh rs_scaling_max && kubectl kustomize ../ | envsubst > ../.env_k8s_temp_app.yaml && echo " = Following k8s objects found = "; cat ../.env_k8s_temp_app.yaml | grep "kind:\|name:\|containers:\|- \|image:\|namespace:"
+- name: push-image
+  command: cd .. &&  bash k8s-deployment/deploy.sh --pushImage=true
+  description: Push docker image
+- name: k8s-image-repo-secret
+  command: cd .. &&  bash k8s-deployment/deploy.sh --imageSecret=true
+  description: Create a kubernetes secret to Docker Repository
+
+hooks:
+- command: sleep
+  args:
+    - 3
+  when:
+    after:
+      images: all
+
+vars:
+- name: K8S_DEPLOYMENT_TIMEOUT
+  source: env
+  default: ${K8S_DEPLOYMENT_TIMEOUT}
+- name: DOCKER_FILE_PATH
+  source: env
+  default: "./Dockerfile"

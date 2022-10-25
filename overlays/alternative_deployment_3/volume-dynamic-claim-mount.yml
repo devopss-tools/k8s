@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_3_NAME}-deployment
+spec:
+  template:
+    spec:
+      volumes:
+      - name: ${PROJECT_NAME}-app-volume
+        persistentVolumeClaim:
+          claimName: ${K8S_VOLUME_CLAIM_NAME}
+      containers:
+      - name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_3_NAME}-app
+        volumeMounts:
+          - name: ${PROJECT_NAME}-app-volume
+            mountPath: ${K8S_VOLUME_MOUNT_PATH}

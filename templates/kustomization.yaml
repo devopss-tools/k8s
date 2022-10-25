@@ -1,0 +1,96 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:  ## All bases k8s objects (deployment, service and ingress).
+  - k8s-deployment/deployment/
+  - k8s-deployment/service/
+  - k8s-deployment/ingress/
+## Additional deployments for this service (alternative services)
+  - k8s-deployment/deployment/alternative_deployment_1/
+  - k8s-deployment/deployment/alternative_deployment_2/
+## Additional service for nginx container from main POD
+  - k8s-deployment/service/nginx
+
+patchesStrategicMerge:  ## Additional kubernetes deployment objects patches (object specifications), all of them are merging into one deployment file.
+  - k8s-deployment/overlays/security/secret-image-repository.yml
+  - k8s-deployment/overlays/deployment/replicas.yml
+  - k8s-deployment/overlays/deployment/command.yml
+  - k8s-deployment/overlays/deployment/port-tcp.yml
+  - k8s-deployment/overlays/deployment/port-udp.yml
+  - k8s-deployment/overlays/deployment/probe-liveness.yml
+  - k8s-deployment/overlays/deployment/probe-readiness.yml
+  - k8s-deployment/overlays/deployment/resources-ram.yml
+  - k8s-deployment/overlays/deployment/resources-cpu.yml
+  - k8s-deployment/overlays/deployment/dns-policy-custom.yml
+  - k8s-deployment/overlays/ingress-controller/ingress-annotations.yml
+  - k8s-deployment/overlays/ingress-controller/ingress-client-max-mody-size.yml
+  - k8s-deployment/overlays/ingress-controller/ingress-ssl-redirect.yml
+  - k8s-deployment/overlays/ingress-controller/do-ssl-k8s-certmanager-ingress-annotations.yml
+  - k8s-deployment/overlays/storage/volume-app-config-file.yml
+  - k8s-deployment/overlays/storage/volume-claim-mount.yml
+  - k8s-deployment/overlays/environments/app-env-variables-file.yml
+  - k8s-deployment/overlays/networking/service-node-port.yml
+  - k8s-deployment/overlays/networking/do-service-lb-base-annotations.yml
+  - k8s-deployment/overlays/configuration/volume-app-ca.yml
+  - k8s-deployment/overlays/configuration/volume-app-mongodb-cert.yml
+  - k8s-deployment/overlays/configuration/volume-app-mongodb-key.yml
+  - k8s-deployment/overlays/configuration/volume-es-cert.yml
+  - k8s-deployment/overlays/alternative_deployment_1/app-env-variables-file.yml
+  - k8s-deployment/overlays/alternative_deployment_1/deployment-command.yml
+  - k8s-deployment/overlays/alternative_deployment_1/dns-policy-custom.yml
+  - k8s-deployment/overlays/alternative_deployment_1/probe-liveness.yml
+  - k8s-deployment/overlays/alternative_deployment_1/probe-readiness.yml
+  - k8s-deployment/overlays/alternative_deployment_1/resources-ram.yml
+  - k8s-deployment/overlays/alternative_deployment_1/resources-cpu.yml
+  - k8s-deployment/overlays/alternative_deployment_1/secret-image-repository.yml
+  - k8s-deployment/overlays/alternative_deployment_1/volume-app-config-file.yml
+  - k8s-deployment/overlays/alternative_deployment_2/app-env-variables-file.yml
+  - k8s-deployment/overlays/alternative_deployment_2/deployment-command.yml
+  - k8s-deployment/overlays/alternative_deployment_2/dns-policy-custom.yml
+  - k8s-deployment/overlays/alternative_deployment_2/probe-liveness.yml
+  - k8s-deployment/overlays/alternative_deployment_2/probe-readiness.yml
+  - k8s-deployment/overlays/alternative_deployment_2/resources-ram.yml
+  - k8s-deployment/overlays/alternative_deployment_2/resources-cpu.yml
+  - k8s-deployment/overlays/alternative_deployment_2/secret-image-repository.yml
+  - k8s-deployment/overlays/alternative_deployment_2/volume-app-config-file.yml
+  - k8s-deployment/overlays/alternative_deployment_1/deployment-spec-port.yml
+  - k8s-deployment/overlays/alternative_deployment_2/deployment-spec-port.yml
+  - k8s-deployment/overlays/security/devopss-tools-platform-secret-image-repository.yml
+  - k8s-deployment/overlays/deployment/pod-with-nginx-container.yml
+  - k8s-deployment/overlays/storage/volume-hostPath-mount-to-nginx.yml
+  - k8s-deployment/overlays/ingress-controller/ingress-path-to-nginx-container.yml
+  - k8s-deployment/overlays/storage/volume-dynamic-claim-mount.yml
+  - k8s-deployment/overlays/alternative_deployment_1/volume-dynamic-claim-mount.yml
+  - k8s-deployment/overlays/alternative_deployment_2/volume-dynamic-claim-mount.yml
+  - k8s-deployment/overlays/storage/volume-claim-mount-to-nginx.yml
+  - k8s-deployment/overlays/networking/service-nginx-node-port.yml
+
+configMapGenerator:   ## Environments
+- name: ${PROJECT_NAME}-app-configfile
+  files:
+  - app_config.tpl
+- name: ${PROJECT_NAME}-app-env-variables-file
+  env: ./.env_vars    # Containers environment variables is created by deploy.sh, must to be. All APP_* from .env file.
+- name: ${PROJECT_NAME}-app-env-variables-file
+  env: ./.env_vars # Containers environment variables is created by deploy.sh, must to be. All APP_* from .env file.
+  literals:
+  - SERVICE=main-api
+- name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_1_NAME}-app-env-variables-file
+  env: ./.env_vars # Containers environment variables is created by deploy.sh, must to be. All APP_* from .env file.
+  literals:
+  - SERVICE=notification
+- name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_2_NAME}-app-env-variables-file
+  env: ./.env_vars # Containers environment variables is created by deploy.sh, must to be. All APP_* from .env file.
+  literals:
+  - SERVICE=payment-processor
+                                                                                                      - name: ${PROJECT_NAME}-nginx-container-configfile
+                                                                                                        files:
+                                                                                                          - k8s-deployment/configmap/nginx/default.conf # required for any options
+                                                                                                          - k8s-deployment/configmap/nginx/media.conf
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    environment: ${K8S_ENV}
+  annotations:
+    note: configmap-generated

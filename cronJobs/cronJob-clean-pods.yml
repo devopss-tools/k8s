@@ -1,0 +1,36 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: ${K8S_APP_NAMESPACE}-clean-pods
+  namespace: ${K8S_APP_NAMESPACE}
+spec:
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 0
+  schedule: "*/11 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: ${K8S_APP_NAMESPACE}-cron-job-clean-pods
+            image: bitnami/kubectl:1.18
+            command:
+              - /bin/bash
+              - -c
+            args:
+              - "for p in $(kubectl get pods -n ${K8S_APP_NAMESPACE} --kubeconfig ./kubeconfig | grep -v Completed | grep -v Running | grep -v Init | grep -v ContainerCreating | awk '{print ${symb}1}'); do kubectl delete pod ${symb}{p} --grace-period=0 --force --kubeconfig ./kubeconfig; done; exit 0"
+            env:
+              - name: CLEAN_PODS
+                value: ""
+              - name: SLEEP
+                value: "sleep 5"
+            volumeMounts:
+              - name: ${K8S_APP_NAMESPACE}-kubeconfig-volume
+                mountPath: ./kubeconfig
+                subPath: config
+            imagePullPolicy: IfNotPresent
+          volumes:
+            - name: ${K8S_APP_NAMESPACE}-kubeconfig-volume
+              configMap:
+                name: ${K8S_APP_NAMESPACE}-kubeconfig-configmap

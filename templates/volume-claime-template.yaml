@@ -1,0 +1,13 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: ${PROJECT_NAME}-${K8S_APP_NAMESPACE}-volume-claim
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "managed-nfs-storage-class"
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi

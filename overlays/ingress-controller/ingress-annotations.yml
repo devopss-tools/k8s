@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: ${K8S_APP_NAMESPACE}
+  annotations:
+    kubernetes.io/ingress.class: "${K8S_INGRESS_CLASS}"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "180s"
+    nginx.org/proxy-connect-timeout: "12s"
+    nginx.org/proxy-read-timeout: "180s"
+    nginx.org/proxy-send-timeout: "180s"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "http_504"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"

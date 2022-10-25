@@ -1,0 +1,65 @@
+---
+stages:
+  - build
+  - deploy
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+  DOCKER_REPO_IMAGE: "$CI_REGISTRY/$CI_PROJECT_PATH"
+
+before_script:
+  - echo "  === Sync Git Module - K8S-Deployment ===  "
+  - git submodule deinit --all -f
+  - git submodule sync
+  - git submodule update --init
+#  - git submodule add -b production --force ../../../devopss-tools/k8s-deployment.git   # Example: For devopss-tools-platform/<group>/<project>
+  - git submodule add -b production --force ../../devopss-tools/k8s-deployment.git       # Example: For <group>/<project>
+  - git submodule update --recursive --remote &&  ls k8s*
+
+build_test:
+  stage: build
+  environment: test
+  variables:
+    VERSION: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+  image:
+    name: $CI_REGISTRY/devopss-tools/k8s-deployment:ci-cd-tools-v02
+  only:
+    refs:
+      - test
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Build Dockerfile ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run build
+    - devspace run push-image
+
+deploy_to_test:
+  stage: deploy
+  environment: test
+  dependencies: [build_test]
+  variables:
+    VERSION: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    DOCKER_IMAGE_TAG: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+    K8S_DOCKER_TAG: "${VersMajor}.${VersMinor}.${VersPatch}-${CI_PIPELINE_IID}-$CI_COMMIT_REF_NAME"
+  image:
+    name: $CI_REGISTRY/devopss-tools/k8s-deployment:ci-cd-tools-v02
+  only:
+    refs:
+      - test
+    variables:
+      - $CI_REGISTRY  =~ /github.com/
+  script:
+    - echo "  === $CI_PROJECT_NAME - Start Deployment ===  "
+    - cat "${envVars}" | envsubst > .env
+    - devspace run deployment
+    - devspace run check-deployment
+
+
+

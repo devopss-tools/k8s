@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_2_NAME}-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_2_NAME}-app
+        readinessProbe:
+#          failureThreshold: 3
+          httpGet:
+            path: ${K8S_ALTERNATIVE_DEPLOYMENT_2_HEALTH_PATH}
+            port: ${K8S_ALTERNATIVE_DEPLOYMENT_2_CONTAINER_PORT}
+            scheme: HTTP
+          initialDelaySeconds: ${K8S_INITIAL_DELAY_SECONDS}
+#          periodSeconds: 10
+#          successThreshold: 1
+          timeoutSeconds: ${K8S_CONTAINER_READINESS_TIMEOUT}

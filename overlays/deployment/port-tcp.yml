@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-app
+        ports:
+        - containerPort: ${K8S_CONTAINER_PORT}
+          protocol: TCP

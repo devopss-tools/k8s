@@ -1,0 +1,42 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: set-replica-zero-for-unused-pods
+spec:
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 0
+  schedule: "0 10 * * 2,4"
+#  schedule: "*/11 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: set-replica-zero-for-unused-pods-app
+            image: bitnami/kubectl:1.18
+            command:
+              - /bin/bash
+#              - -c
+#              - 'sleep 1000'
+              - /scripts/replica_zero.sh
+#            args:
+#              - "./replica_zero.sh"
+            env:
+              - name: PODS_KEEP_DAYS
+                value: "5"
+            volumeMounts:
+              - name: kubeconfig-volume
+                mountPath: /.kube/config
+                subPath: config
+              - name: deployment-replicas-zero-script-volume
+                mountPath: /scripts/replica_zero.sh
+                subPath: replica_zero.sh
+            imagePullPolicy: IfNotPresent
+          volumes:
+            - name: kubeconfig-volume
+              configMap:
+                name: kubeconfig
+            - name: deployment-replicas-zero-script-volume
+              configMap:
+                name: script-replicas-zero

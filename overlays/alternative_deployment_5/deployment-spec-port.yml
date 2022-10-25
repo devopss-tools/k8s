@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-deployment
+  namespace: ${K8S_APP_NAMESPACE}
+spec:
+  replicas: ${K8S_ALTERNATIVE_DEPLOYMENT_5_REPLICAS}
+  template:
+    spec:
+      containers:
+      - name: ${PROJECT_NAME}-${K8S_ALTERNATIVE_DEPLOYMENT_5_NAME}-app
+        image: ${K8S_DOCKER_IMAGE}:${K8S_DOCKER_TAG}
+        ports:
+        - containerPort: ${K8S_ALTERNATIVE_DEPLOYMENT_5_CONTAINER_PORT}

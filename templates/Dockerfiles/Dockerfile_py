@@ -1,0 +1,42 @@
+FROM python:3.7-slim-stretch
+
+# Install missing libs
+RUN apt-get  update && \
+    apt-get install -y  curl libpq-dev gcc python3-cffi git && \
+    apt-get clean autoclean && \
+    apt-get autoremove --purge -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /var/cache/apt/archives/*.deb && \
+    find /var/lib/apt -type f | xargs rm -f && \
+    find /var/cache -type f -exec rm -rf {} \; && \
+    find /var/log -type f | while read f; do echo -ne '' > $f; done;
+
+# Setting Home Directory for containers (create if not exist)
+WORKDIR /usr/app
+
+# Installing python dependencies
+COPY requirements.txt /usr/app
+RUN pip install -U pip && \
+    pip install six && \
+    pip install --no-cache-dir -r requirements.txt  && \
+    pip install gunicorn
+
+# Copying src code to Container
+COPY . /usr/app
+COPY ./docker/docker-startup.sh /usr/app
+
+
+# Exposing Ports
+EXPOSE 8000
+
+# Environemnt variables
+ENV DJANGO_ENV=environment GUNICORN_BIND=0.0.0.0:8000 GUNICORN_WORKERS=4 GUNICORN_WORKERS_CONNECTIONS=1001 GUNICORN_TIMEOUT=300
+
+# Running Python Application
+CMD bash docker-startup.sh
+
+
+# Running Python Application
+#CMD python manage.py runserver ${GUNICORN_BIND}
+#ENTRYPOINT ["/usr/app/entry.sh"]
+#CMD gunicorn --workers=${GUNICORN_WORKERS} config.wsgi:application -b ${GUNICORN_BIND} --log-level info --timeout ${GUNICORN_TIMEOUT}
